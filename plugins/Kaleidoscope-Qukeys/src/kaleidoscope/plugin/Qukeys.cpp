@@ -194,6 +194,15 @@ bool Qukeys::processQueue() {
       // Otherwise, we've found a subsequent key press, so we record it for the
       // overlap comparison later, unless we've already done so.
       if (next_keypress_index == 0) {
+        // If the opposite-hands rule is enabled and this subsequent key is on
+        // the same hand as the qukey, immediately flush as primary. There's no
+        // need to wait for the overlap comparison because same-hand rollover
+        // is never treated as a modifier chord.
+        if (require_opposite_hands_ &&
+            !oppositeHands(queue_head_addr, event_queue_.addr(i))) {
+          flushEvent(queue_head_.primary_key);
+          return true;
+        }
         next_keypress_index = i;
       }
       continue;
@@ -216,6 +225,14 @@ bool Qukeys::processQueue() {
         tap_repeat_.addr       = queue_head_addr;
         tap_repeat_.start_time = event_queue_.timestamp(0);
         flushEvent(event_key);
+        return true;
+      }
+      // If the opposite-hands rule is enabled, and the subsequent key is on
+      // the same hand as the qukey, skip the overlap delay and flush as
+      // primary immediately. Same-hand rollover is always treated as typing.
+      if (require_opposite_hands_ &&
+          !oppositeHands(queue_head_addr, event_queue_.addr(next_keypress_index))) {
+        flushEvent(queue_head_.primary_key);
         return true;
       }
       // Now we know the qukey has been released, but we need to check to see if
@@ -246,6 +263,15 @@ bool Qukeys::processQueue() {
       // not a key press, there must be one in the queue, so it shouldn't be
       // necessary to confirm that `j` is a actually a key press.
       if (event_queue_.addr(j) == event_queue_.addr(i)) {
+        // If the opposite-hands rule is enabled, only allow the alternate
+        // (modifier) value when the subsequent key is on the opposite hand
+        // from the qukey. Same-hand rollover always produces the primary
+        // (tap) value.
+        if (require_opposite_hands_ &&
+            !oppositeHands(queue_head_addr, event_queue_.addr(i))) {
+          flushEvent(queue_head_.primary_key);
+          return true;
+        }
         // Next, verify that enough time has passed after the qukey was pressed
         // to make it eligible for its alternate value. This helps faster
         // typists avoid unintended modifiers in the output.
@@ -493,6 +519,13 @@ bool Qukeys::shouldWaitForTapRepeat() {
 
 
 // -----------------------------------------------------------------------------
+
+// Return true if the two key addresses are on opposite hands, based on the
+// configured split column. This is used by the opposite-hands rule to prevent
+// same-hand rollover from triggering modifiers.
+bool Qukeys::oppositeHands(KeyAddr a, KeyAddr b) const {
+  return (a.col() < split_column_) != (b.col() < split_column_);
+}
 
 // This function is here to provide the test for a SpaceCadet-type qukey, which
 // is any Qukey that has a modifier (including layer shifts) as its primary

@@ -141,6 +141,25 @@ class Qukeys : public kaleidoscope::Plugin {
     minimum_prior_interval_ = min_interval;
   }
 
+  // Enable or disable the opposite-hands rule for home row mods. When enabled,
+  // a qukey will only resolve to its alternate (modifier) value when the
+  // subsequent key is on the opposite hand. Same-hand rollover always produces
+  // the primary (tap) value, preventing accidental modifier activation during
+  // normal typing. The hand boundary is determined by column index: columns
+  // 0 through (split_column - 1) are the left hand, and columns split_column
+  // and above are the right hand.
+  void setEnableOppositeHandsRule(bool enable) {
+    require_opposite_hands_ = enable;
+  }
+
+  // Set the column index that divides left and right hands. Keys with column
+  // index less than this value are considered left-hand keys. Default is 8,
+  // which is correct for Keyboardio Model 01/100 (4x16 matrix, columns 0-7
+  // left, 8-15 right).
+  void setSplitColumn(uint8_t col) {
+    split_column_ = col;
+  }
+
   // Function for defining the array of qukeys data (in PROGMEM). It's a
   // template function that takes as its sole argument an array reference of
   // size `_qukeys_count`, so there's no need to use `sizeof` to calculate the
@@ -210,6 +229,13 @@ class Qukeys : public kaleidoscope::Plugin {
     Key alternate_key{Key_Transparent};
   } queue_head_;
 
+  // When true, qukeys will only resolve to their alternate value when the
+  // subsequent keypress is on the opposite hand.
+  bool require_opposite_hands_{false};
+
+  // The column index that divides left and right hands.
+  uint8_t split_column_{8};
+
   // Internal helper methods.
   bool processQueue();
   void flushEvent(Key event_key);
@@ -217,6 +243,7 @@ class Qukeys : public kaleidoscope::Plugin {
   bool isDualUseKey(Key key);
   bool releaseDelayed(uint16_t overlap_start, uint16_t overlap_end) const;
   bool isKeyAddrInQueueBeforeIndex(KeyAddr k, uint8_t index) const;
+  bool oppositeHands(KeyAddr a, KeyAddr b) const;
 
   // Tap-repeat feature support.
   struct {

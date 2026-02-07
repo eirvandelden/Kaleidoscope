@@ -141,6 +141,39 @@ likely to generate errors and out-of-order events.
 >
 > Defaults to `75` (milliseconds).
 
+### `.setEnableOppositeHandsRule(enable)`
+
+> When set to `true`, qukeys will only resolve to their alternate (modifier)
+> value when the subsequent key press is on the opposite hand from the qukey.
+> Same-hand rollover will always produce the primary (tap) value, preventing
+> accidental modifier activation during normal typing. This implements the
+> "opposite hands rule" popularized by QMK's Achordion and Chordal Hold
+> features.
+>
+> Hand membership is determined by physical key position (column index), not by
+> the key's logical assignment. This means remapping keys via Chrysalis or
+> EEPROM does not affect the hand detection. On split keyboards like the
+> Keyboardio Model 01/100, keys with column index less than the split column
+> (default 8) are considered left-hand keys.
+>
+> Note that holding a qukey alone past the hold timeout will still activate the
+> alternate (modifier) value regardless of this setting. This is intentional, as
+> it allows using a modifier with a pointing device (e.g. `shift` + `click`).
+>
+> Defaults to `false` (disabled).
+
+### `.setSplitColumn(column)`
+
+> Sets the column index that divides left-hand keys from right-hand keys when
+> the opposite-hands rule is enabled. Keys with a column index less than this
+> value are considered left-hand keys; keys with a column index greater than or
+> equal to this value are considered right-hand keys.
+>
+> For the Keyboardio Model 01 and Model 100, the correct value is `8` (columns
+> 0-7 are the left hand, columns 8-15 are the right hand).
+>
+> Defaults to `8`.
+
 ### `.activate()`
 ### `.deactivate()`
 ### `.toggle()`
