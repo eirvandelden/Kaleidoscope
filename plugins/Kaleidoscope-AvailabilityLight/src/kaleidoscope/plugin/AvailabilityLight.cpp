@@ -19,7 +19,7 @@
 #include <Arduino.h>                   // for PSTR, strcmp_P, F
 #include <Kaleidoscope-FocusSerial.h>  // for Focus, FocusSerial
 
-#include "kaleidoscope/Runtime.h"             // for Runtime
+#include "kaleidoscope/Runtime.h"            // for Runtime
 #include "kaleidoscope/plugin/LEDControl.h"  // for LEDControl
 
 namespace kaleidoscope {

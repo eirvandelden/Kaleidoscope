@@ -18,10 +18,10 @@
 
 #include <stdint.h>  // for uint16_t
 
-#include "kaleidoscope/device/device.h"          // for cRGB
-#include "kaleidoscope/event_handler_result.h"   // for EventHandlerResult
-#include "kaleidoscope/plugin.h"                 // for Plugin
-#include "kaleidoscope/plugin/LEDMode.h"         // for LEDMode
+#include "kaleidoscope/device/device.h"            // for cRGB
+#include "kaleidoscope/event_handler_result.h"     // for EventHandlerResult
+#include "kaleidoscope/plugin.h"                   // for Plugin
+#include "kaleidoscope/plugin/LEDMode.h"           // for LEDMode
 #include "kaleidoscope/plugin/LEDModeInterface.h"  // for LEDModeInterface
 
 namespace kaleidoscope {
