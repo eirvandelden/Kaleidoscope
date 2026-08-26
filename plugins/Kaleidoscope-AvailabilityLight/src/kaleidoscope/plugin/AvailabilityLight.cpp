@@ -19,6 +19,7 @@
 #include <Arduino.h>                   // for PSTR, strcmp_P, F
 #include <Kaleidoscope-FocusSerial.h>  // for Focus, FocusSerial
 
+#include "kaleidoscope/Runtime.h"             // for Runtime
 #include "kaleidoscope/plugin/LEDControl.h"  // for LEDControl
 
 namespace kaleidoscope {
@@ -28,8 +29,8 @@ namespace {
 
 /* Every key lit at once draws far more current than a keyboard may take from a
  * USB port, so a colour is scaled down until the whole board fits the budget.
- * Only the brightness gives way; the ratio between the three channels — the
- * colour that was actually asked for — survives.
+ * Only the brightness gives way; the ratio between the three channels, which
+ * is the colour that was actually asked for, survives.
  *
  * This is the same worry that makes the stock firmware boot with its LEDs off,
  * to avoid over-taxing devices with little power to spare. A desktop machine
@@ -37,6 +38,17 @@ namespace {
  * a reason to raise the budget rather than to distrust the host.
  */
 constexpr uint16_t kBrightestTheWholeBoardMayBe = 255;
+
+/* Long enough that a colour changing while you are typing reads as the room
+ * changing rather than as the keyboard blinking at you.
+ */
+constexpr uint16_t kMillisToFinishFading = 2000;
+
+uint8_t partWayThroughTheFade(uint8_t from, uint8_t to, uint16_t elapsed) {
+  const int32_t travelled = (int32_t(to) - int32_t(from)) * elapsed / kMillisToFinishFading;
+
+  return static_cast<uint8_t>(int32_t(from) + travelled);
+}
 
 cRGB withinThePowerBudget(cRGB colour) {
   const uint16_t asked_for = colour.r + colour.g + colour.b;
@@ -63,9 +75,27 @@ EventHandlerResult AvailabilityLight::onFocusEvent(const char *command) {
 
   cRGB asked_for;
   ::Focus.read(asked_for);
-  wanted_ = withinThePowerBudget(asked_for);
+
+  // Fading starts from whatever is on the keys right now, so a colour that
+  // arrives mid-fade redirects the fade instead of queueing behind it.
+  from_          = showingNow();
+  wanted_        = withinThePowerBudget(asked_for);
+  fade_began_at_ = Runtime.millisAtCycleStart();
 
   return EventHandlerResult::EVENT_CONSUMED;
+}
+
+cRGB AvailabilityLight::showingNow() const {
+  const uint16_t fading_for = static_cast<uint16_t>(Runtime.millisAtCycleStart()) - fade_began_at_;
+
+  if (fading_for >= kMillisToFinishFading) return wanted_;
+
+  cRGB partway;
+  partway.r = partWayThroughTheFade(from_.r, wanted_.r, fading_for);
+  partway.g = partWayThroughTheFade(from_.g, wanted_.g, fading_for);
+  partway.b = partWayThroughTheFade(from_.b, wanted_.b, fading_for);
+
+  return partway;
 }
 
 EventHandlerResult AvailabilityLight::onNameQuery() {
@@ -73,7 +103,7 @@ EventHandlerResult AvailabilityLight::onNameQuery() {
 }
 
 void AvailabilityLight::TransientLEDMode::update() {
-  ::LEDControl.set_all_leds_to(light_->wanted_);
+  ::LEDControl.set_all_leds_to(light_->showingNow());
 }
 
 }  // namespace plugin

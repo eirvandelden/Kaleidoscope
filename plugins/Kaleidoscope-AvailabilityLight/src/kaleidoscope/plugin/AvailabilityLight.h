@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <stdint.h>  // for uint16_t
+
 #include "kaleidoscope/device/device.h"          // for cRGB
 #include "kaleidoscope/event_handler_result.h"   // for EventHandlerResult
 #include "kaleidoscope/plugin.h"                 // for Plugin
@@ -28,8 +30,8 @@ namespace plugin {
 /* An LED mode whose colour is chosen by the host rather than by the firmware.
  *
  * The host says `availability.color <red> <green> <blue>` over Focus and the
- * whole board takes that colour. Something outside the keyboard decides what
- * the colours mean; all this plugin does is show one.
+ * whole board fades to that colour over a couple of seconds. Something outside
+ * the keyboard decides what the colours mean; all this plugin does is show one.
  */
 class AvailabilityLight : public Plugin,
                           public LEDModeInterface {
@@ -54,7 +56,11 @@ class AvailabilityLight : public Plugin,
   };
 
  private:
+  cRGB showingNow() const;
+
+  cRGB from_{0, 0, 0};
   cRGB wanted_{0, 0, 0};
+  uint16_t fade_began_at_ = 0;
 };
 
 }  // namespace plugin
