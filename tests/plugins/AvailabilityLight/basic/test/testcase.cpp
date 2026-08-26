@@ -38,6 +38,22 @@ TEST_F(AvailabilityLightTest, AskingForRedTurnsEveryKeyRed) {
   ExpectTheWholeBoardShows(200, 0, 0);
 }
 
+TEST_F(AvailabilityLightTest, FullWhiteIsDimmedToWhatTheKeyboardCanPower) {
+  RunCycle();
+
+  AskForColour("availability.color 255 255 255");
+
+  ExpectTheWholeBoardShows(85, 85, 85);
+}
+
+TEST_F(AvailabilityLightTest, ADimmedColourIsStillTheColourThatWasAskedFor) {
+  RunCycle();
+
+  AskForColour("availability.color 255 128 0");
+
+  ExpectTheWholeBoardShows(169, 85, 0);
+}
+
 }  // namespace
 }  // namespace testing
 }  // namespace kaleidoscope
